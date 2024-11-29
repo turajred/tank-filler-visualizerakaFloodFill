@@ -30,10 +30,24 @@ const Tank = () => {
     let filledCount = 0;
     let totalFilledCells = fillCount * FILL_INCREMENT;
     
-    for (let y = GRID_SIZE - 1; y >= 0 && filledCount < cellsToFill; y--) {
+    // Calculate starting position for the current fill
+    const startRow = Math.floor(totalFilledCells / GRID_SIZE);
+    const startCol = totalFilledCells % GRID_SIZE;
+    
+    // Fill from bottom to top
+    for (let x = startCol; x < GRID_SIZE && filledCount < cellsToFill; x++) {
+      const y = startRow;
+      if (y < GRID_SIZE) {
+        newGrid[y][x] = true;
+        filledCount++;
+      }
+    }
+    
+    // If we need to continue filling in the next row
+    if (filledCount < cellsToFill) {
       for (let x = 0; x < GRID_SIZE && filledCount < cellsToFill; x++) {
-        const cellIndex = y * GRID_SIZE + x;
-        if (cellIndex >= totalFilledCells && cellIndex < totalFilledCells + FILL_INCREMENT) {
+        const y = startRow + 1;
+        if (y < GRID_SIZE) {
           newGrid[y][x] = true;
           filledCount++;
         }
