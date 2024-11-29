@@ -42,13 +42,11 @@ const Tank = () => {
       visited.add(key);
       newGrid[y][x] = true;
 
-      // Add adjacent cells
-      queue.push(
-        { x: x + 1, y },
-        { x: x - 1, y },
-        { x, y + 1 },
-        { x, y - 1 }
-      );
+      // Add adjacent cells - fixed the syntax by calling push for each cell
+      queue.push({ x: x + 1, y });
+      queue.push({ x: x - 1, y });
+      queue.push({ x, y: y + 1 });
+      queue.push({ x, y: y - 1 });
     }
 
     return newGrid;
