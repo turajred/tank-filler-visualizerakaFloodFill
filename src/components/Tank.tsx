@@ -26,7 +26,7 @@ const Tank = () => {
   const fillNextCell = useCallback((currentGrid: boolean[][]) => {
     const newGrid = currentGrid.map(row => [...row]);
     const totalCells = GRID_SIZE * GRID_SIZE;
-    const cellsToFill = Math.floor((fillCount + 1) * totalCells / MAX_FILLS);
+    const cellsToFill = Math.floor((fillCount + 1) * FILL_INCREMENT);
     
     let filledCount = 0;
     for (let y = GRID_SIZE - 1; y >= 0; y--) {
