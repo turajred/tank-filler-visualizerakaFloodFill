@@ -57,6 +57,17 @@ const Tank = () => {
     }
   };
 
+  const handleReset = () => {
+    setGrid(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill(false)));
+    setFillCount(0);
+    setShowWarning(false);
+    setShowDialog(false);
+    toast({
+      title: "Tank Reset",
+      description: "Tank has been emptied and ready to fill again",
+    });
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
       <div className="w-full max-w-md space-y-8">
@@ -73,6 +84,7 @@ const Tank = () => {
         <TankControls 
           fillPercentage={(fillCount / MAX_FILLS) * 100}
           onFill={handleFill}
+          onReset={handleReset}
           disabled={fillCount >= MAX_FILLS}
         />
       </div>
