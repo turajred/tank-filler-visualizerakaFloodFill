@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Cell {
   x: number;
@@ -9,6 +15,7 @@ interface Cell {
 
 const GRID_SIZE = 20;
 const WARNING_THRESHOLD = 0.8; // 80% full
+const TOTAL_FILL_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 const FILL_SPEED = 100; // ms between fills
 
 const Tank = () => {
@@ -18,6 +25,9 @@ const Tank = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [fillPercentage, setFillPercentage] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [remainingTime, setRemainingTime] = useState<number>(TOTAL_FILL_TIME);
+  const [showDialog, setShowDialog] = useState(false);
   const { toast } = useToast();
 
   const floodFill = useCallback((startX: number, startY: number, newGrid: boolean[][]) => {
@@ -55,7 +65,16 @@ const Tank = () => {
   useEffect(() => {
     if (!isRunning) return;
 
+    if (!startTime) {
+      setStartTime(Date.now());
+    }
+
     const interval = setInterval(() => {
+      const currentTime = Date.now();
+      const elapsedTime = startTime ? currentTime - startTime : 0;
+      const remaining = Math.max(0, TOTAL_FILL_TIME - elapsedTime);
+      setRemainingTime(remaining);
+
       setGrid((prevGrid) => {
         const newGrid = prevGrid.map(row => [...row]);
         const bottomRow = GRID_SIZE - 1;
@@ -78,13 +97,13 @@ const Tank = () => {
           setShowWarning(true);
           toast({
             title: "Tank Almost Full!",
-            description: `${(100 - percentage).toFixed(1)}% capacity remaining`,
+            description: "Click the warning sign to see remaining time",
             variant: "destructive",
           });
         }
 
-        // Stop if tank is full
-        if (percentage >= 100) {
+        // Stop if tank is full or time is up
+        if (percentage >= 100 || remaining <= 0) {
           setIsRunning(false);
           toast({
             title: "Tank is Full",
@@ -97,13 +116,21 @@ const Tank = () => {
     }, FILL_SPEED);
 
     return () => clearInterval(interval);
-  }, [isRunning, floodFill, showWarning, toast]);
+  }, [isRunning, floodFill, showWarning, toast, startTime]);
 
   const resetTank = () => {
     setGrid(Array(GRID_SIZE).fill(Array(GRID_SIZE).fill(false)));
     setFillPercentage(0);
     setShowWarning(false);
     setIsRunning(false);
+    setStartTime(null);
+    setRemainingTime(TOTAL_FILL_TIME);
+  };
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -112,6 +139,9 @@ const Tank = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-semibold text-gray-900">Tank Simulator</h1>
           <p className="text-gray-500">Watch the tank fill using flood fill algorithm</p>
+          <div className="text-lg font-medium text-gray-700">
+            Time Remaining: {formatTime(remainingTime)}
+          </div>
         </div>
 
         <div className={`relative border-2 border-gray-200 rounded-lg overflow-hidden backdrop-blur-sm bg-tank-glass transition-all duration-300 aspect-square ${
@@ -132,7 +162,10 @@ const Tank = () => {
           ))}
 
           {showWarning && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div 
+              className="absolute inset-0 flex items-center justify-center cursor-pointer"
+              onClick={() => setShowDialog(true)}
+            >
               <div className="relative">
                 <AlertCircle className="w-12 h-12 text-tank-warning animate-bounce" />
                 <div className="absolute inset-0 bg-tank-warning rounded-full animate-ripple" />
@@ -161,6 +194,25 @@ const Tank = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tank Status</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            <p className="text-lg font-medium">
+              Time until overflow: {formatTime(remainingTime)}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Current fill level: {fillPercentage.toFixed(1)}%
+            </p>
+            <p className="text-sm text-gray-500">
+              Remaining capacity: {(100 - fillPercentage).toFixed(1)}%
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
